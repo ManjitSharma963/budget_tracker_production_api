@@ -21,6 +21,7 @@ public class CorsConfig {
         config.addAllowedOrigin("http://localhost:5173");
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://localhost:4200");
+        config.addAllowedOrigin("http://localhost");
         
         // For production, add your production domain here
         // config.addAllowedOrigin("https://yourdomain.com");
