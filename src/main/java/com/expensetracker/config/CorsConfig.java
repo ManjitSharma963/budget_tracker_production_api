@@ -17,11 +17,12 @@ public class CorsConfig {
         // Allow credentials
         config.setAllowCredentials(true);
         
-        // Allow specific origins for development
+        // Allow specific origins for development (explicit origins required when credentials are enabled)
+        config.addAllowedOrigin("http://localhost");
         config.addAllowedOrigin("http://localhost:5173");
         config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedOrigin("http://localhost:4200");
-        config.addAllowedOrigin("http://localhost");
+        config.addAllowedOrigin("http://localhost:8080");
         
         // For production, add your production domain here
         // config.addAllowedOrigin("https://yourdomain.com");
