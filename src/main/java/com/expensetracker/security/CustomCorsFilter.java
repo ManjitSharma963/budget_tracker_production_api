@@ -34,6 +34,7 @@ public class CustomCorsFilter extends OncePerRequestFilter {
 
         String origin = request.getHeader("Origin");
         
+        // Always set CORS headers for allowed origins
         if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
             response.setHeader("Access-Control-Allow-Origin", origin);
             response.setHeader("Access-Control-Allow-Credentials", "true");
@@ -41,9 +42,21 @@ public class CustomCorsFilter extends OncePerRequestFilter {
             response.setHeader("Access-Control-Allow-Headers", "*");
             response.setHeader("Access-Control-Expose-Headers", "*");
             response.setHeader("Access-Control-Max-Age", "3600");
+        } else if (origin != null) {
+            // Log unallowed origin for debugging
+            logger.warn("CORS: Origin not allowed: " + origin);
         }
 
+        // Handle preflight OPTIONS requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            // Set CORS headers even for OPTIONS if origin is allowed
+            if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
+                response.setHeader("Access-Control-Allow-Origin", origin);
+                response.setHeader("Access-Control-Allow-Credentials", "true");
+                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
+                response.setHeader("Access-Control-Allow-Headers", "*");
+                response.setHeader("Access-Control-Max-Age", "3600");
+            }
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
