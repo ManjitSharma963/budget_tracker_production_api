@@ -22,7 +22,10 @@ public class CustomCorsFilter extends OncePerRequestFilter {
         "http://localhost:5173",
         "http://localhost:3000",
         "http://localhost:4200",
-        "http://localhost:8080"
+        "http://localhost:8080",
+        "http://139.59.85.102",
+        "http://139.59.85.102:80",
+        "http://139.59.85.102:8080"
     );
 
     @Override
