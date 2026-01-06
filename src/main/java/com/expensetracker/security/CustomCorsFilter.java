@@ -25,9 +25,33 @@ public class CustomCorsFilter extends OncePerRequestFilter {
         String origin = request.getHeader("Origin");
         String requestMethod = request.getMethod();
         
-        // Allow ALL origins - set CORS headers for any origin
+        // Log for debugging
+        logger.info("CORS Filter: " + requestMethod + " " + request.getRequestURI() + " | Origin: " + origin);
+        
+        // Handle preflight OPTIONS requests FIRST - must be before filterChain
+        if ("OPTIONS".equalsIgnoreCase(requestMethod)) {
+            // Always allow OPTIONS requests from ANY origin
+            if (origin != null && !origin.isEmpty()) {
+                response.setHeader("Access-Control-Allow-Origin", origin);
+                response.setHeader("Access-Control-Allow-Credentials", "true");
+                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
+                response.setHeader("Access-Control-Allow-Headers", "*");
+                response.setHeader("Access-Control-Max-Age", "3600");
+                logger.info("CORS: OPTIONS preflight - Headers set for origin: " + origin);
+            } else {
+                // Even if no origin, set basic CORS headers
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
+                response.setHeader("Access-Control-Allow-Headers", "*");
+                logger.warn("CORS: OPTIONS preflight - No origin header present");
+            }
+            response.setStatus(HttpServletResponse.SC_OK);
+            return; // Don't continue filter chain for OPTIONS
+        }
+        
+        // Allow ALL origins for actual requests - set CORS headers for any origin
         // When allowCredentials is true, we must use the actual origin value, not "*"
-        if (origin != null) {
+        if (origin != null && !origin.isEmpty()) {
             // Always allow any origin - echo back the origin that was sent
             response.setHeader("Access-Control-Allow-Origin", origin);
             response.setHeader("Access-Control-Allow-Credentials", "true");
@@ -35,21 +59,6 @@ public class CustomCorsFilter extends OncePerRequestFilter {
             response.setHeader("Access-Control-Allow-Headers", "*");
             response.setHeader("Access-Control-Expose-Headers", "*");
             response.setHeader("Access-Control-Max-Age", "3600");
-        }
-        
-        // Handle preflight OPTIONS requests FIRST - must be before filterChain
-        if ("OPTIONS".equalsIgnoreCase(requestMethod)) {
-            // Always allow OPTIONS requests from any origin
-            if (origin != null) {
-                response.setHeader("Access-Control-Allow-Origin", origin);
-                response.setHeader("Access-Control-Allow-Credentials", "true");
-                response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
-                response.setHeader("Access-Control-Allow-Headers", "*");
-                response.setHeader("Access-Control-Max-Age", "3600");
-            }
-            response.setStatus(HttpServletResponse.SC_OK);
-            logger.debug("CORS: OPTIONS preflight ALLOWED for origin: " + origin);
-            return; // Don't continue filter chain for OPTIONS
         }
 
         filterChain.doFilter(request, response);
