@@ -25,7 +25,11 @@ public class CustomCorsFilter extends OncePerRequestFilter {
         "http://localhost:8080",
         "http://139.59.85.102",
         "http://139.59.85.102:80",
-        "http://139.59.85.102:8080"
+        "http://139.59.85.102:8080",
+        "http://www.trackmyexpenses.in",
+        "https://www.trackmyexpenses.in",
+        "http://trackmyexpenses.in",
+        "https://trackmyexpenses.in"
     );
 
     @Override

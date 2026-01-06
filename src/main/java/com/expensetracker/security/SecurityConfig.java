@@ -66,7 +66,11 @@ public class SecurityConfig {
             "http://localhost:8080",
             "http://139.59.85.102",
             "http://139.59.85.102:80",
-            "http://139.59.85.102:8080"
+            "http://139.59.85.102:8080",
+            "http://www.trackmyexpenses.in",
+            "https://www.trackmyexpenses.in",
+            "http://trackmyexpenses.in",
+            "https://trackmyexpenses.in"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
