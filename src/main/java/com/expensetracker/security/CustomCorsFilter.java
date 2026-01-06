@@ -12,6 +12,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -38,8 +39,16 @@ public class CustomCorsFilter extends OncePerRequestFilter {
 
         String origin = request.getHeader("Origin");
         
-        // Always set CORS headers for allowed origins
-        if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
+        // Check if origin is allowed (case-insensitive and handle with/without trailing slash)
+        boolean isAllowedOrigin = false;
+        if (origin != null) {
+            String normalizedOrigin = origin.toLowerCase().trim();
+            isAllowedOrigin = ALLOWED_ORIGINS.stream()
+                .anyMatch(allowed -> allowed.toLowerCase().equals(normalizedOrigin));
+        }
+        
+        // Set CORS headers for allowed origins
+        if (isAllowedOrigin) {
             response.setHeader("Access-Control-Allow-Origin", origin);
             response.setHeader("Access-Control-Allow-Credentials", "true");
             response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
@@ -48,21 +57,24 @@ public class CustomCorsFilter extends OncePerRequestFilter {
             response.setHeader("Access-Control-Max-Age", "3600");
         } else if (origin != null) {
             // Log unallowed origin for debugging
-            logger.warn("CORS: Origin not allowed: " + origin);
+            logger.warn("CORS: Origin not allowed: " + origin + ". Allowed origins: " + ALLOWED_ORIGINS);
         }
 
-        // Handle preflight OPTIONS requests
+        // Handle preflight OPTIONS requests FIRST - must be before filterChain
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            // Set CORS headers even for OPTIONS if origin is allowed
-            if (origin != null && ALLOWED_ORIGINS.contains(origin)) {
+            // Always set CORS headers for OPTIONS if origin is allowed
+            if (isAllowedOrigin && origin != null) {
                 response.setHeader("Access-Control-Allow-Origin", origin);
                 response.setHeader("Access-Control-Allow-Credentials", "true");
                 response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD");
                 response.setHeader("Access-Control-Allow-Headers", "*");
                 response.setHeader("Access-Control-Max-Age", "3600");
+            } else if (origin != null) {
+                // Log for debugging
+                logger.warn("CORS: OPTIONS request from unallowed origin: " + origin);
             }
             response.setStatus(HttpServletResponse.SC_OK);
-            return;
+            return; // Don't continue filter chain for OPTIONS
         }
 
         filterChain.doFilter(request, response);
