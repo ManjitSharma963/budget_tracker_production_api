@@ -29,8 +29,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String requestPath = request.getRequestURI();
+        
         // Skip JWT processing for OPTIONS requests (CORS preflight)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Skip JWT processing for public endpoints
+        if (requestPath.startsWith("/api/auth/") || requestPath.equals("/api/health")) {
             filterChain.doFilter(request, response);
             return;
         }
