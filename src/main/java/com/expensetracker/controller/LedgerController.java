@@ -33,16 +33,10 @@ public class LedgerController {
     @PostMapping("/entries")
     public ResponseEntity<?> createLedgerEntry(@Valid @RequestBody LedgerEntryRequest request) {
         try {
-            // Get party ID from either format
-            Long partyId = request.getPartyIdValue();
-            if (partyId == null) {
-                return ResponseEntity.badRequest().body(new com.expensetracker.dto.MessageResponse("Party ID is required"));
-            }
-            
             // Convert request DTO to entity
             LedgerEntry ledgerEntry = new LedgerEntry();
             Party party = new Party();
-            party.setId(partyId);
+            party.setId(request.getPartyIdValue());
             ledgerEntry.setParty(party);
             ledgerEntry.setTransactionType(request.getTransactionType());
             ledgerEntry.setAmount(request.getAmount());
@@ -70,10 +64,10 @@ public class LedgerController {
         try {
             // Convert request DTO to entity
             LedgerEntry entryDetails = new LedgerEntry();
-            Long partyId = request.getPartyIdValue();
-            if (partyId != null) {
+            Long partyIdValue = request.getPartyIdValue();
+            if (partyIdValue != null) {
                 Party party = new Party();
-                party.setId(partyId);
+                party.setId(partyIdValue);
                 entryDetails.setParty(party);
             }
             entryDetails.setTransactionType(request.getTransactionType());
