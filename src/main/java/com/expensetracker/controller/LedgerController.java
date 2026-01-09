@@ -1,9 +1,11 @@
 package com.expensetracker.controller;
 
 import com.expensetracker.dto.LedgerEntryDto;
+import com.expensetracker.dto.LedgerEntryRequest;
 import com.expensetracker.dto.LedgerSummary;
 import com.expensetracker.dto.OutstandingBalanceResponse;
 import com.expensetracker.entity.LedgerEntry;
+import com.expensetracker.entity.Party;
 import com.expensetracker.service.LedgerService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,12 +31,30 @@ public class LedgerController {
     }
 
     @PostMapping("/entries")
-    public ResponseEntity<LedgerEntryDto> createLedgerEntry(@Valid @RequestBody LedgerEntry ledgerEntry) {
+    public ResponseEntity<?> createLedgerEntry(@Valid @RequestBody LedgerEntryRequest request) {
         try {
+            // Get party ID from either format
+            Long partyId = request.getPartyIdValue();
+            if (partyId == null) {
+                return ResponseEntity.badRequest().body(new com.expensetracker.dto.MessageResponse("Party ID is required"));
+            }
+            
+            // Convert request DTO to entity
+            LedgerEntry ledgerEntry = new LedgerEntry();
+            Party party = new Party();
+            party.setId(partyId);
+            ledgerEntry.setParty(party);
+            ledgerEntry.setTransactionType(request.getTransactionType());
+            ledgerEntry.setAmount(request.getAmount());
+            ledgerEntry.setTransactionDate(request.getTransactionDate());
+            ledgerEntry.setDescription(request.getDescription());
+            ledgerEntry.setReferenceNumber(request.getReferenceNumber());
+            ledgerEntry.setPaymentMode(request.getPaymentMode());
+            
             LedgerEntry createdEntry = ledgerService.createLedgerEntry(ledgerEntry);
             return ResponseEntity.status(HttpStatus.CREATED).body(LedgerEntryDto.fromEntity(createdEntry));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(new com.expensetracker.dto.MessageResponse(e.getMessage()));
         }
     }
 
@@ -46,12 +66,27 @@ public class LedgerController {
     }
 
     @PutMapping("/entries/{id}")
-    public ResponseEntity<LedgerEntryDto> updateLedgerEntry(@PathVariable Long id, @Valid @RequestBody LedgerEntry entryDetails) {
+    public ResponseEntity<?> updateLedgerEntry(@PathVariable Long id, @Valid @RequestBody LedgerEntryRequest request) {
         try {
+            // Convert request DTO to entity
+            LedgerEntry entryDetails = new LedgerEntry();
+            Long partyId = request.getPartyIdValue();
+            if (partyId != null) {
+                Party party = new Party();
+                party.setId(partyId);
+                entryDetails.setParty(party);
+            }
+            entryDetails.setTransactionType(request.getTransactionType());
+            entryDetails.setAmount(request.getAmount());
+            entryDetails.setTransactionDate(request.getTransactionDate());
+            entryDetails.setDescription(request.getDescription());
+            entryDetails.setReferenceNumber(request.getReferenceNumber());
+            entryDetails.setPaymentMode(request.getPaymentMode());
+            
             LedgerEntry updatedEntry = ledgerService.updateLedgerEntry(id, entryDetails);
             return ResponseEntity.ok(LedgerEntryDto.fromEntity(updatedEntry));
         } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().body(new com.expensetracker.dto.MessageResponse(e.getMessage()));
         }
     }
 
