@@ -46,6 +46,8 @@ CREATE TABLE IF NOT EXISTS expenses (
     updated_at DATETIME(6),
     user_id BIGINT NOT NULL,
     INDEX idx_expenses_user (user_id),
+    INDEX idx_expenses_user_date (user_id, created_at DESC),
+    INDEX idx_expenses_user_category (user_id, category),
     CONSTRAINT fk_expenses_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
@@ -148,6 +150,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     INDEX idx_tasks_user (user_id),
     INDEX idx_tasks_date (date),
     INDEX idx_tasks_status (status),
+    INDEX idx_tasks_user_date (user_id, date DESC),
     CONSTRAINT fk_tasks_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
@@ -169,8 +172,28 @@ CREATE TABLE IF NOT EXISTS budgets (
     INDEX idx_budgets_user (user_id),
     INDEX idx_budgets_category (category),
     INDEX idx_budgets_period (period),
+    INDEX idx_budgets_user_period (user_id, period),
     UNIQUE KEY uk_budgets_user_category_period (user_id, category, period),
     CONSTRAINT fk_budgets_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ======================
+-- SAVINGS GOALS
+-- ======================
+CREATE TABLE IF NOT EXISTS savings_goals (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(200) NOT NULL,
+    target_amount DECIMAL(19,2) NOT NULL,
+    current_amount DECIMAL(19,2) NOT NULL DEFAULT 0,
+    target_date DATE,
+    description VARCHAR(500),
+    created_at DATETIME(6),
+    updated_at DATETIME(6),
+    user_id BIGINT NOT NULL,
+    INDEX idx_savings_goals_user (user_id),
+    CONSTRAINT fk_savings_goals_user
         FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
 ) ENGINE=InnoDB;

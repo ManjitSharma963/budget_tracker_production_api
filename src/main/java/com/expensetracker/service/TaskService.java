@@ -6,8 +6,13 @@ import com.expensetracker.entity.User;
 import com.expensetracker.repository.TaskRepository;
 import com.expensetracker.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +31,20 @@ public class TaskService {
     public List<Task> getAllTasks() {
         User currentUser = securityUtil.getCurrentUser();
         return taskRepository.findByUser(currentUser);
+    }
+
+    public Page<Task> getAllTasks(int page, int size, String sortBy, String sortDir) {
+        User currentUser = securityUtil.getCurrentUser();
+        Sort sort = sortDir != null && sortDir.equalsIgnoreCase("desc") ? 
+                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return taskRepository.findByUser(currentUser, pageable);
+    }
+
+    public Page<Task> getTasksByDate(LocalDate date, int page, int size) {
+        User currentUser = securityUtil.getCurrentUser();
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startTime").ascending());
+        return taskRepository.findByUserAndDate(currentUser, date, pageable);
     }
 
     public Optional<Task> getTaskById(Long id) {

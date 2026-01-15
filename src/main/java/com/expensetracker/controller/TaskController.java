@@ -1,5 +1,6 @@
 package com.expensetracker.controller;
 
+import com.expensetracker.dto.PageResponse;
 import com.expensetracker.dto.TaskRequest;
 import com.expensetracker.entity.Task;
 import com.expensetracker.service.TaskService;
@@ -25,9 +26,25 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks() {
-        List<Task> tasks = taskService.getAllTasks();
-        return ResponseEntity.ok(tasks);
+    public ResponseEntity<?> getAllTasks(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "date") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        if (size > 0) {
+            org.springframework.data.domain.Page<Task> taskPage = taskService.getAllTasks(page, size, sortBy, sortDir);
+            PageResponse<Task> response = PageResponse.of(
+                    taskPage.getContent(),
+                    taskPage.getNumber(),
+                    taskPage.getSize(),
+                    taskPage.getTotalElements()
+            );
+            return ResponseEntity.ok(response);
+        } else {
+            List<Task> tasks = taskService.getAllTasks();
+            return ResponseEntity.ok(tasks);
+        }
     }
 
     @GetMapping("/{id}")

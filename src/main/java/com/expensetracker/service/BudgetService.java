@@ -3,9 +3,16 @@ package com.expensetracker.service;
 import com.expensetracker.dto.BudgetRequest;
 import com.expensetracker.entity.Budget;
 import com.expensetracker.entity.User;
+import com.expensetracker.exception.DuplicateResourceException;
+import com.expensetracker.exception.ResourceNotFoundException;
+import com.expensetracker.exception.ValidationException;
 import com.expensetracker.repository.BudgetRepository;
 import com.expensetracker.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -29,9 +36,18 @@ public class BudgetService {
         return budgetRepository.findByUser(currentUser);
     }
 
-    public Optional<Budget> getBudgetById(Long id) {
+    public Page<Budget> getAllBudgets(int page, int size, String sortBy, String sortDir) {
         User currentUser = securityUtil.getCurrentUser();
-        return budgetRepository.findByIdAndUser(id, currentUser);
+        Sort sort = sortDir != null && sortDir.equalsIgnoreCase("desc") ? 
+                Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return budgetRepository.findByUser(currentUser, pageable);
+    }
+
+    public Budget getBudgetById(Long id) {
+        User currentUser = securityUtil.getCurrentUser();
+        return budgetRepository.findByIdAndUser(id, currentUser)
+                .orElseThrow(() -> new ResourceNotFoundException("Budget", id));
     }
 
     public Budget createBudget(BudgetRequest budgetRequest) {
@@ -40,14 +56,14 @@ public class BudgetService {
         // Validate required fields
         if (budgetRequest.getCategory() == null || budgetRequest.getCategory().trim().isEmpty() || 
             budgetRequest.getBudgetType() == null || budgetRequest.getPeriod() == null) {
-            throw new RuntimeException("Missing required fields: category, budgetType, period");
+            throw new ValidationException("Missing required fields: category, budgetType, period");
         }
 
         String category = budgetRequest.getCategory().trim();
         
         // Check if budget already exists for this category and period
         if (budgetRepository.existsByUserAndCategoryAndPeriod(currentUser, category, budgetRequest.getPeriod())) {
-            throw new RuntimeException("Budget already exists for this category and period");
+            throw new DuplicateResourceException("Budget already exists for this category and period");
         }
 
         Budget budget = budgetRequest.toBudget();
@@ -55,17 +71,17 @@ public class BudgetService {
         // Validate and set amount/percentage based on budget type
         if (budgetRequest.getBudgetType() == Budget.BudgetType.fixed) {
             if (budgetRequest.getAmount() == null || budgetRequest.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new RuntimeException("Amount must be greater than 0 for fixed budget");
+                throw new ValidationException("Amount must be greater than 0 for fixed budget");
             }
             budget.setAmount(budgetRequest.getAmount());
             budget.setPercentage(null);
         } else if (budgetRequest.getBudgetType() == Budget.BudgetType.percentage) {
             if (budgetRequest.getPercentage() == null) {
-                throw new RuntimeException("Percentage is required for percentage budget");
+                throw new ValidationException("Percentage is required for percentage budget");
             }
             if (budgetRequest.getPercentage().compareTo(BigDecimal.ZERO) < 0 || 
                 budgetRequest.getPercentage().compareTo(BigDecimal.valueOf(100)) > 0) {
-                throw new RuntimeException("Percentage must be between 0 and 100");
+                throw new ValidationException("Percentage must be between 0 and 100");
             }
             budget.setPercentage(budgetRequest.getPercentage());
             
@@ -85,7 +101,7 @@ public class BudgetService {
     public Budget updateBudget(Long id, BudgetRequest budgetRequest) {
         User currentUser = securityUtil.getCurrentUser();
         Budget budget = budgetRepository.findByIdAndUser(id, currentUser)
-                .orElseThrow(() -> new RuntimeException("Budget not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Budget", id));
 
         // Determine final category and period values
         String finalCategory = budgetRequest.getCategory() != null ? 
@@ -98,7 +114,7 @@ public class BudgetService {
             Optional<Budget> existing = budgetRepository.findByUserAndCategoryAndPeriod(
                     currentUser, finalCategory, finalPeriod);
             if (existing.isPresent() && !existing.get().getId().equals(id)) {
-                throw new RuntimeException("Budget already exists for this category and period");
+                throw new DuplicateResourceException("Budget already exists for this category and period");
             }
         }
 
@@ -122,7 +138,7 @@ public class BudgetService {
         if (newBudgetType == Budget.BudgetType.fixed) {
             if (budgetRequest.getAmount() != null) {
                 if (budgetRequest.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                    throw new RuntimeException("Amount must be greater than 0");
+                    throw new ValidationException("Amount must be greater than 0");
                 }
                 budget.setAmount(budgetRequest.getAmount());
             }
@@ -134,7 +150,7 @@ public class BudgetService {
             if (budgetRequest.getPercentage() != null) {
                 if (budgetRequest.getPercentage().compareTo(BigDecimal.ZERO) < 0 || 
                     budgetRequest.getPercentage().compareTo(BigDecimal.valueOf(100)) > 0) {
-                    throw new RuntimeException("Percentage must be between 0 and 100");
+                    throw new ValidationException("Percentage must be between 0 and 100");
                 }
                 budget.setPercentage(budgetRequest.getPercentage());
                 // Recalculate amount if monthlyIncome provided
@@ -151,7 +167,7 @@ public class BudgetService {
     public void deleteBudget(Long id) {
         User currentUser = securityUtil.getCurrentUser();
         if (!budgetRepository.existsByIdAndUser(id, currentUser)) {
-            throw new RuntimeException("Budget not found");
+            throw new ResourceNotFoundException("Budget", id);
         }
         budgetRepository.deleteById(id);
     }
