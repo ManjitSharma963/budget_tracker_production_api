@@ -1,21 +1,30 @@
 version: '3.8'
 
-services:
-  mysql:
-    image: mysql:8.0
-    container_name: expenses-tracker-mysql
-    environment:
-      MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: expenes_tracker
-      MYSQL_USER: appuser
-      MYSQL_PASSWORD: apppass
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password
+# This docker-compose.yml is for the API application only
+# MySQL database should be running externally (not in this container)
+# 
+# To use external MySQL:
+# 1. Ensure MySQL is running on your host machine or another server
+# 2. Update application.properties with your MySQL connection details
+# 3. Or set environment variables:
+#    - DB_HOST=localhost (or your MySQL host)
+#    - DB_PORT=3306
+#    - DB_NAME=expenses_tracker
+#    - DB_USER=appuser
+#    - DB_PASSWORD=apppass
 
-volumes:
-  mysql_data:
+services:
+  # Uncomment below if you want to run the API in Docker
+  # api:
+  #   build: .
+  #   container_name: expenses-tracker-api
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - SPRING_DATASOURCE_URL=jdbc:mysql://host.docker.internal:3306/expenses_tracker?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true&useServerPrepStmts=true
+  #     - SPRING_DATASOURCE_USERNAME=appuser
+  #     - SPRING_DATASOURCE_PASSWORD=apppass
+  #   depends_on:
+  #     - wait-for-mysql
+  #   restart: unless-stopped
 

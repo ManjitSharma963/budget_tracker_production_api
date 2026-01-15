@@ -27,26 +27,42 @@ A Spring Boot REST API for managing expenses, income, and credits.
 
 ### Database Setup
 
-#### Option 1: Using Docker Compose (Recommended)
+**Note:** This application connects to an **external MySQL database** (not in Docker container).
+
+#### Option 1: Manual MySQL Setup (Recommended)
+
+1. Install MySQL 8.0 on your system or use an existing MySQL server
+2. Create database:
+   ```sql
+   CREATE DATABASE expenses_tracker CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
+3. Create user:
+   ```sql
+   CREATE USER 'appuser'@'localhost' IDENTIFIED BY 'apppass';
+   ```
+4. Grant privileges:
+   ```sql
+   GRANT ALL PRIVILEGES ON expenses_tracker.* TO 'appuser'@'localhost';
+   FLUSH PRIVILEGES;
+   ```
+
+#### Option 2: Let Application Create Database
+
+The application will automatically create the database if it doesn't exist (requires CREATE DATABASE privilege).
+
+#### Configuration via Environment Variables
+
+You can override database connection using environment variables:
 
 ```bash
-docker-compose up -d
+export DB_HOST=localhost          # MySQL host (default: localhost)
+export DB_PORT=3306              # MySQL port (default: 3306)
+export DB_NAME=expenses_tracker   # Database name (default: expenses_tracker)
+export DB_USER=appuser            # MySQL username (default: appuser)
+export DB_PASSWORD=apppass        # MySQL password (default: apppass)
 ```
 
-This will start MySQL 8.0 with the following configuration:
-- Database: `expenes_tracker`
-- Username: `appuser`
-- Password: `apppass`
-- Root Password: `root123`
-- Port: `3306`
-
-#### Option 2: Manual MySQL Setup
-
-1. Install MySQL 8.0
-2. Create database: `CREATE DATABASE expenes_tracker;`
-3. Create user: `CREATE USER 'appuser'@'localhost' IDENTIFIED BY 'apppass';`
-4. Grant privileges: `GRANT ALL PRIVILEGES ON expenes_tracker.* TO 'appuser'@'localhost';`
-5. Flush privileges: `FLUSH PRIVILEGES;`
+See `EXTERNAL_MYSQL_SETUP.md` for detailed setup instructions.
 
 ### Build the Project
 
@@ -138,24 +154,24 @@ The application uses MySQL 8.0 database. The database configuration is:
 
 - **Host:** `localhost`
 - **Port:** `3306`
-- **Database:** `expenes_tracker`
+- **Database:** `expenses_tracker`
 - **Username:** `appuser`
 - **Password:** `apppass`
 - **Root Password:** `root123`
 
 ### Database Connection Details
 
-- JDBC URL: `jdbc:mysql://localhost:3306/expenes_tracker`
+- JDBC URL: `jdbc:mysql://localhost:3306/expenses_tracker`
 - The database will be created automatically if it doesn't exist (via `createDatabaseIfNotExist=true`)
 
 ### Connect to MySQL
 
 ```bash
-# Using Docker
-docker exec -it expenses-tracker-mysql mysql -u appuser -papppass expenes_tracker
+# Connect to external MySQL
+mysql -u appuser -papppass expenses_tracker
 
 # Or using root
-docker exec -it expenses-tracker-mysql mysql -u root -proot123
+mysql -u root -p
 ```
 
 ## Project Structure
