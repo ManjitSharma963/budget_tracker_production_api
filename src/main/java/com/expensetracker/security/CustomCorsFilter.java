@@ -22,6 +22,15 @@ public class CustomCorsFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        HttpServletRequest req = (HttpServletRequest) request;
+        String path = req.getRequestURI();
+
+        // 🔥 BYPASS health checks completely
+        if (path.equals("/health") || path.equals("/actuator/health")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String origin = request.getHeader("Origin");
         String requestMethod = request.getMethod();
         

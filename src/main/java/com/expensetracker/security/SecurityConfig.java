@@ -76,7 +76,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow all OPTIONS requests
                 .requestMatchers("/api/auth/**").permitAll() // Allow all auth endpoints
-                .requestMatchers("/api/health").permitAll() // Allow health check
+                .requestMatchers("/health", "/actuator/health").permitAll() // Allow health check endpoints
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
