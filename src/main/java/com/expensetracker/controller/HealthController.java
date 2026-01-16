@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api")
 public class HealthController {
 
     @GetMapping("/health")
@@ -18,5 +17,10 @@ public class HealthController {
         response.put("message", "API is running");
         return ResponseEntity.ok(response);
     }
+    @GetMapping("/health-simple")
+     public ResponseEntity<String> healthSimple() {
+    return ResponseEntity.ok("ok");
+}
+
 }
 
