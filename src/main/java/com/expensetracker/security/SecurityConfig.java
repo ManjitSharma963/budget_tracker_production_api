@@ -75,6 +75,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Allow all OPTIONS requests
+                .requestMatchers(HttpMethod.HEAD, "/**").permitAll() // Allow all OPTIONS requests
                 .requestMatchers("/api/auth/**").permitAll() // Allow all auth endpoints
                 .requestMatchers("/actuator/**","/health").permitAll() // Allow health check endpoints
                 .anyRequest().authenticated()
